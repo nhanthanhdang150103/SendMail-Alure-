@@ -2,6 +2,7 @@ pipeline {
     agent any
     tools {
         nodejs 'Node22' // Đảm bảo tên này khớp với cấu hình trong Jenkins Global Tool Configuration
+        allure 'Allure_2.29.0' // Thêm Allure Commandline tool đã cấu hình trong Jenkins Global Tool Configuration
     }
 
     environment {
@@ -57,7 +58,7 @@ pipeline {
         always {
             // Bước này sẽ tự động tìm kết quả và hiển thị báo cáo Allure trên trang build
             // Nó vẫn yêu cầu bạn phải cài đặt Allure Jenkins Plugin
-            allure includeProperties: false, jdk: '', report: 'allure-report', results: [[path: 'allure-results']]
+            allure includeProperties: false, tool: 'Allure_2.29.0', report: 'allure-report', results: [[path: 'allure-results']]
 
             cleanWs() // Dọn dẹp workspace
         }
