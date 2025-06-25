@@ -35,13 +35,6 @@ pipeline {
             }
         }
 
-        stage('Generate Allure Report') {
-            steps {
-                // Tạo báo cáo HTML từ các file kết quả Allure
-                sh 'allure generate allure-results --clean -o allure-report'
-            }
-        }
-
         stage('Archive Artifacts') {
             steps {
                 // Lưu trữ báo cáo Allure và kết quả test (bao gồm trace và screenshot nếu có)
