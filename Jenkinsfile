@@ -58,7 +58,7 @@ pipeline {
         always {
             // Bước này sẽ tự động tìm kết quả và hiển thị báo cáo Allure trên trang build
             // Nó vẫn yêu cầu bạn phải cài đặt Allure Jenkins Plugin
-            allure includeProperties: false, allureCli: 'Allure_2.29.0', report: 'allure-report', results: [[path: 'allure-results']]
+            allure includeProperties: false, results: [[path: 'allure-results']]
 
             cleanWs() // Dọn dẹp workspace
         }
