@@ -55,27 +55,31 @@ pipeline {
 
     post {
         always {
+            // Bước này sẽ tự động tìm kết quả và hiển thị báo cáo Allure trên trang build
+            // Nó vẫn yêu cầu bạn phải cài đặt Allure Jenkins Plugin
+            allure includeProperties: false, jdk: '', report: 'allure-report', results: [[path: 'allure-results']]
+
             cleanWs() // Dọn dẹp workspace
         }
         success {
-            echo 'Build successful!'
             script {
+                echo 'Build successful!'
                 mail(to: 'nhanthanhdang2003@gmail.com',
                      subject: "Jenkins Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} - SUCCESS",
                      body: "Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} passed successfully.\nCheck build details at: ${env.BUILD_URL}")
             }
         }
         failure {
-            echo 'Build failed.'
             script {
+                echo 'Build failed.'
                 mail(to: 'nhanthanhdang2003@gmail.com',
                      subject: "Jenkins Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} - FAILED",
                      body: "Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} failed.\nCheck console output at: ${env.BUILD_URL}")
             }
         }
         unstable {
-            echo 'Build unstable, likely due to test failures.'
             script {
+                echo 'Build unstable, likely due to test failures.'
                 mail(to: 'nhanthanhdang2003@gmail.com',
                      subject: "Jenkins Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} - UNSTABLE",
                      body: "Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} is unstable (likely due to test failures).\nCheck build details at: ${env.BUILD_URL}")
