@@ -4,19 +4,21 @@
   "main": "index.js",
   "scripts": {
     "test": "cucumber-js",
-    "report": "node generate-report.js",
-    "test:report": "npm run test && npm run report"
+    "allure:generate": "allure generate allure-results --clean -o allure-report",
+    "allure:open": "allure open allure-report",
+    "test:allure": "npm run test && npm run allure:generate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "allure-commandline": "^2.29.0",
+    "allure-cucumberjs": "^3.2.2",
     "@cucumber/cucumber": "^11.3.0",
     "@cucumber/pretty-formatter": "^1.0.1",
     "@playwright/test": "^1.52.0",
     "@types/node": "^22.15.29",
-    "cucumber-html-reporter": "^7.2.0",
     "dotenv": "^16.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

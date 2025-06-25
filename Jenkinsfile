@@ -8,7 +8,7 @@ pipeline {
         BASE_URL = credentials('BASE_URL') // Sử dụng Jenkins Credentials để bảo mật
         LOGIN_USERNAME = credentials('LOGIN_USERNAME')
         LOGIN_PASSWORD = credentials('LOGIN_PASSWORD')
-        // HEADLESS_MODE = 'true'
+        HEADLESS_MODE = 'true'
         // CI = 'true'
         // Thêm DEBUG để có log chi tiết từ Playwright khi chạy trên Jenkins
         // DEBUG = 'pw:api' // Bỏ comment dòng này nếu muốn log API của Playwright
@@ -28,18 +28,27 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                // Chạy test
-                // Nếu bạn đã bỏ comment DEBUG=pw:api ở trên, lệnh này sẽ có thêm log
-                sh 'npx cucumber-js tests/features/**/*.feature --require tests/step-definitions/**/*.ts --require tests/hooks/hooks.ts --format json:cucumber-report.json --format summary --format progress-bar'
+                // Chạy test và tạo các file kết quả Allure
+                // Cucumber sẽ tự động đọc cấu hình từ file cucumber.json
+                sh 'npx cucumber-js'
+            }
+        }
+
+        stage('Generate Allure Report') {
+            steps {
+                // Tạo báo cáo HTML từ các file kết quả Allure
+                sh 'allure generate allure-results --clean -o allure-report'
             }
         }
 
         stage('Archive Artifacts') {
             steps {
-                // Lưu trữ báo cáo test và kết quả test (bao gồm trace và screenshot nếu có)
-                archiveArtifacts artifacts: 'cucumber-report.json, test-results/', allowEmptyArchive: true
-                // Thêm Cucumber Reports plugin nếu có
-                step([$class: 'CucumberReportPublisher', jsonReportDirectory: '.', fileIncludePattern: 'cucumber-report.json'])
+                // Lưu trữ báo cáo Allure và kết quả test (bao gồm trace và screenshot nếu có)
+                archiveArtifacts artifacts: 'allure-results/**, allure-report/**, test-results/', allowEmptyArchive: true
+                // Cấu hình Allure Report plugin trong Jenkins
+                // Đảm bảo bạn đã cài đặt Allure Plugin trong Jenkins
+                // Post-build action: "Publish Allure Report"
+                // Path to results: allure-results
             }
         }
     }
@@ -50,14 +59,27 @@ pipeline {
         }
         success {
             echo 'Build successful!'
-            // Có thể thêm thông báo qua email hoặc Slack
+            script {
+                mail(to: 'nhanthanhdang2003@gmail.com',
+                     subject: "Jenkins Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} - SUCCESS",
+                     body: "Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} passed successfully.\nCheck build details at: ${env.BUILD_URL}")
+            }
         }
         failure {
             echo 'Build failed.'
-            // Có thể thêm thông báo qua email hoặc Slack
+            script {
+                mail(to: 'nhanthanhdang2003@gmail.com',
+                     subject: "Jenkins Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} - FAILED",
+                     body: "Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} failed.\nCheck console output at: ${env.BUILD_URL}")
+            }
         }
         unstable {
             echo 'Build unstable, likely due to test failures.'
+            script {
+                mail(to: 'nhanthanhdang2003@gmail.com',
+                     subject: "Jenkins Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} - UNSTABLE",
+                     body: "Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} is unstable (likely due to test failures).\nCheck build details at: ${env.BUILD_URL}")
+            }
         }
     }
 }

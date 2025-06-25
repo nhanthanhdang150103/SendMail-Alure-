@@ -5,10 +5,7 @@
       "tests/step-definitions/*.ts",
       "tests/hooks/hooks.ts"
     ],
-    "format": [
-      "@cucumber/pretty-formatter",
-      "json:reports/cucumber-report.json"
-    ],
+    "format": ["allure-cucumberjs/reporter"],
     "requireModule": ["ts-node/register"],
     "timeout": 300000
   }
