@@ -35,5 +35,8 @@ export class LoginPage extends BasePage {
     await this.enterUsername(username);
     await this.enterPassword(password);
     await this.clickLoginButton();
+    // Chờ cho đến khi URL chứa 'desk' để đảm bảo đã đăng nhập và chuyển trang thành công
+    // Điều này giúp tránh race condition khi các bước tiếp theo thực thi trước khi trang dashboard tải xong
+    await this.page.waitForURL('**/desk', { timeout: 30000 });
   }
 }
