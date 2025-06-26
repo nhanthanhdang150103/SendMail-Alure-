@@ -10,6 +10,15 @@ Given('I am on the login page', async () => {
   await loginPage.navigate();
 });
 
+When('I login with valid credentials', async () => {
+  const username = process.env.LOGIN_USERNAME;
+  const password = process.env.LOGIN_PASSWORD;
+  if (!username || !password) {
+    throw new Error('LOGIN_USERNAME or LOGIN_PASSWORD is not defined in environment variables.');
+  }
+  await loginPage.login(username, password);
+});
+
 When('I login with username {string} and password {string}', async (username: string, password: string) => {
   await loginPage.login(username, password);
 });

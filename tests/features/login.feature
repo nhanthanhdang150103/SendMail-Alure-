@@ -2,7 +2,7 @@ Feature: Login Functionality
 
   Scenario: Successful login with valid credentials
     Given I am on the login page
-    When I login with username "admin_example" and password "123456"
+    When I login with valid credentials
     Then I should see the success message "Logged In Successfully."
 
   Scenario: Failed login with invalid credentials
