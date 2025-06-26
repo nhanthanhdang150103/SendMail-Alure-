@@ -10,12 +10,8 @@ Given('I am on the login page', async () => {
   await loginPage.navigate();
 });
 
-When('I enter username {string} and password {string}', async (username: string, password: string) => {
+When('I login with username {string} and password {string}', async (username: string, password: string) => {
   await loginPage.login(username, password);
-});
-
-When('I click the login button', async () => {
-  // Đã tích hợp trong hàm login, không cần bước riêng
 });
 
 Then('I should see the success message {string}', async (expectedMessage: string) => {

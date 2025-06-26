@@ -1,5 +1,5 @@
 export const TasksSelectors = {
-  tasksMenuLink: 'a[href*="my-tasks-list"]', // Menu Tasks
+  tasksMenuLink: 'a[href*="tasks-list"]', // Menu Tasks
   addNewButton: 'a[href="#add_form"]:has(svg.feather-plus)', // Nút Add New
   titleInput: 'input[name="task_name"]', // Tiêu đề
   startDateInput: 'input[name="start_date"]', // Ngày bắt đầu
