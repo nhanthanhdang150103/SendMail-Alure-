@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 import { LoginSelectors } from '../selectors/login.selectors';
-import { BasePage } from './base.page';
+import { BasePage } from './base.page/base.page';
 
 export class LoginPage extends BasePage {
   constructor(page: Page) {

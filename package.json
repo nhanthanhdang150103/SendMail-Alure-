@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "cucumber-js",
+    "auth": "npx playwright test --project=setup",
+    "test:cucumber": "cucumber-js",
+    "test": "npm run auth && npm run test:cucumber",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",
     "test:allure": "npm run test && npm run allure:generate"

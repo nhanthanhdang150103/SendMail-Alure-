@@ -1,32 +1,42 @@
-import { defineConfig } from '@playwright/test';
+// playwright.config.ts
+
+import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+
+// Đường dẫn đến file lưu trạng thái xác thực
+export const STORAGE_STATE = path.join(__dirname, 'playwright/.auth/user.json');
 
 export default defineConfig({
   // Timeout toàn cục cho mỗi test case, bao gồm cả hooks.
-  // Mặc định là 30000ms (30 giây).
-  timeout: 60000, // Tăng lên 60 giây
+  timeout: 60000, 
 
+  // Cấu hình các "projects" để tách biệt giai đoạn setup và test
+  projects: [
+    // Project 'setup' chỉ chạy file auth.setup.ts
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/, // Chỉ tìm và chạy file này
+    },
+
+    // Project chính để chạy test Cucumber, phụ thuộc vào 'setup'
+    {
+      name: 'cucumber-tests',
+      testMatch: /features\.test\.ts/, // File giả để kích hoạt Playwright (sẽ giải thích ở dưới)
+      use: {
+        // Sử dụng trạng thái đã được chuẩn bị bởi project 'setup'
+        storageState: STORAGE_STATE,
+        headless: process.env.HEADLESS_MODE === 'true',
+        trace: 'retain-on-failure',
+        screenshot: 'only-on-failure',
+      },
+      // Đảm bảo project 'setup' chạy xong trước khi project này bắt đầu
+      dependencies: ['setup'],
+    },
+  ],
+
+  // Các cấu hình use toàn cục (sẽ được kế thừa bởi các projects)
   use: {
-    // Timeout mặc định cho các action của Playwright (ví dụ: page.click(), page.fill()).
-    // Mặc định là 0 (không có timeout riêng cho action, sẽ dùng timeout của test).
-    // Chúng ta có thể đặt một giá trị cụ thể ở đây.
-    actionTimeout: 30000, // Tăng lên 30 giây cho mỗi action
-
-    // Timeout mặc định cho các navigation (ví dụ: page.goto()).
-    // Mặc định là 0 (không có timeout riêng cho navigation, sẽ dùng timeout của test).
-    navigationTimeout: 90000, // Thử tăng mạnh lên 90 giây cho navigation
-
-    headless: process.env.HEADLESS_MODE === 'true',
-    // Bật trace và screenshot để dễ debug khi test fail trên CI
-    trace: 'retain-on-failure', // Giữ lại trace file khi test thất bại
-    screenshot: 'only-on-failure', // Chỉ chụp ảnh màn hình khi test thất bại
-    // slowMo: process.env.SLOW_MO ? parseInt(process.env.SLOW_MO, 10) : 0, // Bạn có thể đặt slowMo ở đây nếu muốn
+    actionTimeout: 30000,
+    navigationTimeout: 90000,
   },
-
-  // Cấu hình cho các project (nếu bạn chạy test trên nhiều trình duyệt)
-  // projects: [
-  //   {
-  //     name: 'chromium',
-  //     use: { ...devices['Desktop Chrome'] },
-  //   },
-  // ],
 });

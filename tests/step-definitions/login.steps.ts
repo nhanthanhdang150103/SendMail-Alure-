@@ -1,6 +1,6 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
-import { LoginPage } from '../pages/login.page';
+import { LoginPage } from '../pom/pages/login.page';
 import { page } from '../hooks/hooks';
 
 let loginPage: LoginPage;
