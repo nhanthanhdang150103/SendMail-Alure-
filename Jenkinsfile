@@ -1,77 +1,66 @@
 pipeline {
     agent any
     tools {
-        nodejs 'Node22'
-        allure 'Allure_2.29.0' // Ensure this name matches your Jenkins Global Tool Configuration
+        nodejs 'Node22' // Đảm bảo tên này khớp với cấu hình trong Jenkins Global Tool Configuration
+        allure 'Allure_2.29.0' // Thêm Allure Commandline tool đã cấu hình trong Jenkins Global Tool Configuration
     }
 
     environment {
-        BASE_URL = credentials('BASE_URL')
+        BASE_URL = credentials('BASE_URL') // Sử dụng Jenkins Credentials để bảo mật
         LOGIN_USERNAME = credentials('LOGIN_USERNAME')
         LOGIN_PASSWORD = credentials('LOGIN_PASSWORD')
         HEADLESS_MODE = 'true'
+        // CI = 'true'
+        // Thêm DEBUG để có log chi tiết từ Playwright khi chạy trên Jenkins
+        // DEBUG = 'pw:api' // Bỏ comment dòng này nếu muốn log API của Playwright
     }
 
     triggers {
-        pollSCM('H/5 * * * *')
+        pollSCM('H/5 * * * *') // Kiểm tra SCM mỗi 5 phút
     }
 
     stages {
         stage('Install Dependencies') {
             steps {
-                sh 'npm install --no-optional'
+                // Cài đặt dependencies và kiểm tra lỗi
+                sh 'npm install --no-optional' // --no-optional để giảm nguy cơ lỗi phụ thuộc
             }
         }
 
         stage('Run Tests') {
             steps {
-                script {
-                    def authResult = sh(script: 'npx playwright test --project=setup', returnStatus: true)
-                    if (authResult != 0) {
-                        error 'Playwright authentication setup failed.'
-                    }
-                }
-                sh 'npx cucumber-js || true'
-            }
-        }
+                // ✅ BƯỚC 1: Chạy setup để tạo file trạng thái đăng nhập
+                sh 'npx playwright test --project=setup'
 
-        stage('Generate Allure Report') {
-            steps {
-                // Ensure the allure tool's bin directory is on the PATH for this step
-                // This is needed for 'allure generate' command
-                withTools([allure('Allure_2.29.0')]) {
-                    sh 'allure generate allure-results --clean -o allure-report'
-                }
+                // ✅ BƯỚC 2: Chạy các kịch bản Cucumber với trạng thái đã có
+                sh 'npx cucumber-js'
             }
         }
 
         stage('Archive Artifacts') {
             steps {
+                // Lưu trữ báo cáo Allure và kết quả test (bao gồm trace và screenshot nếu có)
                 archiveArtifacts artifacts: 'allure-results/**, allure-report/**, test-results/', allowEmptyArchive: true
+                // Cấu hình Allure Report plugin trong Jenkins
+                // Đảm bảo bạn đã cài đặt Allure Plugin trong Jenkins
+                // Post-build action: "Publish Allure Report"
+                // Path to results: allure-results
             }
         }
     }
 
     post {
         always {
-            // Re-check the syntax for the 'allure' step.
-            // The problem might stem from a subtle interaction with the 'tools' definition.
-            // Let's try explicitly naming the tool within the 'allure' step parameters,
-            // even though it's typically inferred. This can sometimes resolve
-            // ambiguity if other Allure tools are defined or if there's a
-            // versioning nuance.
-            allure(
-                tool: 'Allure_2.29.0', // Explicitly specify the tool ID
-                includeProperties: false,
-                results: [[path: 'allure-results']]
-            )
+            // Bước này sẽ tự động tìm kết quả và hiển thị báo cáo Allure trên trang build
+            // Nó vẫn yêu cầu bạn phải cài đặt Allure Jenkins Plugin
+            allure includeProperties: false, results: [[path: 'allure-results']]
 
-            cleanWs()
+            cleanWs() // Dọn dẹp workspace
         }
         success {
             script {
                 echo 'Build successful!'
-                mail(to: 'nhanthanhdang2003@gmail0.com',
+                mail(to: 'nhanthanhdang2003@gmail.com',
                      subject: "Jenkins Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} - SUCCESS",
                      body: "Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} passed successfully.\nCheck build details at: ${env.BUILD_URL}")
             }
