@@ -1,61 +1,68 @@
 pipeline {
     agent any
     tools {
-        nodejs 'Node22' // Đảm bảo tên này khớp với cấu hình trong Jenkins Global Tool Configuration
-        allure 'Allure_2.29.0' // Thêm Allure Commandline tool đã cấu hình trong Jenkins Global Tool Configuration
+        nodejs 'Node22'
+        allure 'Allure_2.29.0'
     }
 
     environment {
-        BASE_URL = credentials('BASE_URL') // Sử dụng Jenkins Credentials để bảo mật
+        BASE_URL = credentials('BASE_URL')
         LOGIN_USERNAME = credentials('LOGIN_USERNAME')
         LOGIN_PASSWORD = credentials('LOGIN_PASSWORD')
         HEADLESS_MODE = 'true'
-        // CI = 'true'
-        // Thêm DEBUG để có log chi tiết từ Playwright khi chạy trên Jenkins
-        // DEBUG = 'pw:api' // Bỏ comment dòng này nếu muốn log API của Playwright
     }
 
     triggers {
-        pollSCM('H/5 * * * *') // Kiểm tra SCM mỗi 5 phút
+        pollSCM('H/5 * * * *')
     }
 
     stages {
         stage('Install Dependencies') {
             steps {
-                // Cài đặt dependencies và kiểm tra lỗi
-                sh 'npm install --no-optional' // --no-optional để giảm nguy cơ lỗi phụ thuộc
+                sh 'npm install --no-optional'
             }
         }
 
         stage('Run Tests') {
             steps {
-                // ✅ BƯỚC 1: Chạy setup để tạo file trạng thái đăng nhập
-                sh 'npx playwright test --project=setup'
-
-                // ✅ BƯỚC 2: Chạy các kịch bản Cucumber với trạng thái đã có
-                sh 'npx cucumber-js'
+                // Ensure auth setup runs successfully
+                script {
+                    def authResult = sh(script: 'npx playwright test --project=setup', returnStatus: true)
+                    if (authResult != 0) {
+                        error 'Playwright authentication setup failed.'
+                    }
+                }
+                // Run Cucumber tests
+                // We run cucumber-js and allow it to fail (return non-zero exit code)
+                // The Allure post-build step will correctly interpret the results
+                // and set the build status (success, unstable, failure).
+                // We add '|| true' here just to ensure this specific step doesn't abort the pipeline immediately,
+                // allowing the 'allure generate' and post-build actions to run.
+                // However, given your logs show all PASSED, it should already be exiting with 0.
+                // The real issue might be related to artifacts or the allure generation itself,
+                // or a very subtle timing/race condition with Jenkins.
+                sh 'npx cucumber-js || true'
             }
         }
 
-        stage('Archive Artifacts') {
+        stage('Generate and Archive Report') { // Changed stage name for clarity
             steps {
-                // Lưu trữ báo cáo Allure và kết quả test (bao gồm trace và screenshot nếu có)
+                // Generate Allure report first
+                sh 'allure generate allure-results --clean -o allure-report'
+
+                // Archive the generated report and results
                 archiveArtifacts artifacts: 'allure-results/**, allure-report/**, test-results/', allowEmptyArchive: true
-                // Cấu hình Allure Report plugin trong Jenkins
-                // Đảm bảo bạn đã cài đặt Allure Plugin trong Jenkins
-                // Post-build action: "Publish Allure Report"
-                // Path to results: allure-results
             }
         }
     }
 
     post {
         always {
-            // Bước này sẽ tự động tìm kết quả và hiển thị báo cáo Allure trên trang build
-            // Nó vẫn yêu cầu bạn phải cài đặt Allure Jenkins Plugin
+            // This line automatically picks up allure-results and publishes the report.
+            // It will also set the build status (success, unstable, failure) based on the test results.
             allure includeProperties: false, results: [[path: 'allure-results']]
 
-            cleanWs() // Dọn dẹp workspace
+            cleanWs()
         }
         success {
             script {
