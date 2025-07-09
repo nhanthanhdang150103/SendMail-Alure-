@@ -29,8 +29,10 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                // Chạy test và tạo các file kết quả Allure
-                // Cucumber sẽ tự động đọc cấu hình từ file cucumber.json
+                // ✅ BƯỚC 1: Chạy setup để tạo file trạng thái đăng nhập
+                sh 'npx playwright test --project=setup'
+
+                // ✅ BƯỚC 2: Chạy các kịch bản Cucumber với trạng thái đã có
                 sh 'npx cucumber-js'
             }
         }
