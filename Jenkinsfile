@@ -2,7 +2,7 @@ pipeline {
     agent any
     tools {
         nodejs 'Node22'
-        allure 'Allure_2.29.0'
+        allure 'Allure_2.29.0' // Ensure this name matches your Jenkins Global Tool Configuration
     }
 
     environment {
@@ -25,32 +25,27 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                // Ensure auth setup runs successfully
                 script {
                     def authResult = sh(script: 'npx playwright test --project=setup', returnStatus: true)
                     if (authResult != 0) {
                         error 'Playwright authentication setup failed.'
                     }
                 }
-                // Run Cucumber tests
-                // We run cucumber-js and allow it to fail (return non-zero exit code)
-                // The Allure post-build step will correctly interpret the results
-                // and set the build status (success, unstable, failure).
-                // We add '|| true' here just to ensure this specific step doesn't abort the pipeline immediately,
-                // allowing the 'allure generate' and post-build actions to run.
-                // However, given your logs show all PASSED, it should already be exiting with 0.
-                // The real issue might be related to artifacts or the allure generation itself,
-                // or a very subtle timing/race condition with Jenkins.
                 sh 'npx cucumber-js || true'
             }
         }
 
-        stage('Generate and Archive Report') { // Changed stage name for clarity
+        stage('Generate Allure Report') { // Renamed for clarity
             steps {
-                // Generate Allure report first
-                sh 'allure generate allure-results --clean -o allure-report'
+                // Ensure the allure tool's bin directory is on the PATH for this step
+                withTools([allure('Allure_2.29.0')]) { // Use withTools to ensure allure is in PATH
+                    sh 'allure generate allure-results --clean -o allure-report'
+                }
+            }
+        }
 
-                // Archive the generated report and results
+        stage('Archive Artifacts') { // Separated Archive Artifacts
+            steps {
                 archiveArtifacts artifacts: 'allure-results/**, allure-report/**, test-results/', allowEmptyArchive: true
             }
         }
@@ -58,8 +53,7 @@ pipeline {
 
     post {
         always {
-            // This line automatically picks up allure-results and publishes the report.
-            // It will also set the build status (success, unstable, failure) based on the test results.
+            // This is the Jenkins Allure plugin's step, which correctly finds the tool.
             allure includeProperties: false, results: [[path: 'allure-results']]
 
             cleanWs()
