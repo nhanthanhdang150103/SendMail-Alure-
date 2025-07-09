@@ -35,16 +35,17 @@ pipeline {
             }
         }
 
-        stage('Generate Allure Report') { // Renamed for clarity
+        stage('Generate Allure Report') {
             steps {
                 // Ensure the allure tool's bin directory is on the PATH for this step
-                withTools([allure('Allure_2.29.0')]) { // Use withTools to ensure allure is in PATH
+                // This is needed for 'allure generate' command
+                withTools([allure('Allure_2.29.0')]) {
                     sh 'allure generate allure-results --clean -o allure-report'
                 }
             }
         }
 
-        stage('Archive Artifacts') { // Separated Archive Artifacts
+        stage('Archive Artifacts') {
             steps {
                 archiveArtifacts artifacts: 'allure-results/**, allure-report/**, test-results/', allowEmptyArchive: true
             }
@@ -53,15 +54,24 @@ pipeline {
 
     post {
         always {
-            // This is the Jenkins Allure plugin's step, which correctly finds the tool.
-            allure includeProperties: false, results: [[path: 'allure-results']]
+            // Re-check the syntax for the 'allure' step.
+            // The problem might stem from a subtle interaction with the 'tools' definition.
+            // Let's try explicitly naming the tool within the 'allure' step parameters,
+            // even though it's typically inferred. This can sometimes resolve
+            // ambiguity if other Allure tools are defined or if there's a
+            // versioning nuance.
+            allure(
+                tool: 'Allure_2.29.0', // Explicitly specify the tool ID
+                includeProperties: false,
+                results: [[path: 'allure-results']]
+            )
 
             cleanWs()
         }
         success {
             script {
                 echo 'Build successful!'
-                mail(to: 'nhanthanhdang2003@gmail.com',
+                mail(to: 'nhanthanhdang2003@gmail0.com',
                      subject: "Jenkins Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} - SUCCESS",
                      body: "Build ${env.JOB_NAME} - ${env.BUILD_NUMBER} passed successfully.\nCheck build details at: ${env.BUILD_URL}")
             }
