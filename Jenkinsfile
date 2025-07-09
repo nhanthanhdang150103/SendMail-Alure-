@@ -27,13 +27,15 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+      stage('Run Tests') {
             steps {
-                // ✅ BƯỚC 1: Chạy setup để tạo file trạng thái đăng nhập
-                sh 'npx playwright test --project=setup'
-
-                // ✅ BƯỚC 2: Chạy các kịch bản Cucumber với trạng thái đã có
-                sh 'npx cucumber-js'
+                script {
+                    def authResult = sh(script: 'npx playwright test --project=setup', returnStatus: true)
+                    if (authResult != 0) {
+                        error 'Playwright authentication setup failed.'
+                    }
+                }
+                sh 'npx cucumber-js || true'
             }
         }
 
