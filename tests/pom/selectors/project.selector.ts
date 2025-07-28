@@ -17,7 +17,7 @@ export const ProjectSelectors = {
   // endDateOkButton: 'div.dtp.hidden.animated.fadeIn div.dtp-buttons > button.dtp-btn-ok',
   summaryTextarea: 'textarea[placeholder="Summary"]',
   teamSelect: 'ul.select2-selection__rendered',
-  teamOption: '(//li[contains(@class, "select2-results__option") and normalize-space(.)="Admin Example"])[2]',
+  teamOption: '(//li[contains(@class, "select2-results__option") and normalize-space(.)="Admin Example"])',
 
   // Save Button
   saveButton: '//button[.//span[contains(normalize-space(), "Save")]]',
